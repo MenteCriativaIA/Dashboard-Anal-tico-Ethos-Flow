@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethos Flow - Analisador de Benefícios via MCP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm Sand & Calm Blue -->
+    <!-- Application Structure Plan: Uma estrutura de dashboard com 3 abas principais. 1. 'Visão Geral' (simulação do resultado da varredura). 2. 'Estratégia MCP' (resposta direta à dúvida do usuário sobre como implementar isso na IDE). 3. 'Mapeamento Interativo' (tabela interativa mostrando a relação Função -> Benefício). Esta estrutura foi escolhida para entregar a resposta teórica junto com uma prova de conceito visual do resultado desejado. -->
+    <!-- Visualization & Content Choices: Radar Chart (Chart.js) para mostrar o impacto das funcionalidades do Ethos Flow nos objetivos de negócio do Tenant. HTML/CSS estruturado para explicar o fluxo do MCP. Grid interativo filtrável para explorar os benefícios de cada função. Tudo isso para garantir uma navegação fluida sem usar SVG ou Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAFAF9; /* Warm neutral background */
+            color: #292524;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid #0284C7; /* Calm blue accent */
+            color: #0284C7;
+            font-weight: 600;
+        }
+
+        /* Custom scrollbar for content areas */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F5F5F4;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D6D3D1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A8A29E;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col h-screen overflow-hidden">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white border-b border-stone-200 shadow-sm z-10 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl" aria-hidden="true">&#129504;</span> <!-- Brain Unicode -->
+                    <h1 class="text-xl font-bold text-stone-800">Ethos Flow <span class="text-stone-400 font-normal">| Analyzer</span></h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <button class="tab-btn active px-1 py-4 text-sm text-stone-500 hover:text-sky-700 transition-colors" data-target="dashboard">Visão Geral do Tenant</button>
+                    <button class="tab-btn px-1 py-4 text-sm text-stone-500 hover:text-sky-700 transition-colors" data-target="mcp-guide">Estratégia MCP na IDE</button>
+                    <button class="tab-btn px-1 py-4 text-sm text-stone-500 hover:text-sky-700 transition-colors" data-target="benefits-map">Explorador de Benefícios</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-stone-50">
+        <div class="max-w-7xl mx-auto space-y-8">
+
+            <!-- VIEW 1: Dashboard (Simulated Report) -->
+            <section id="dashboard" class="tab-content block animate-fade-in">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-stone-800 mb-2">Impacto das Funcionalidades no Tenant</h2>
+                    <p class="text-stone-600">Este dashboard é uma <strong>simulação</strong> do relatório que um agente autônomo geraria ao varrer as milhares de linhas do Ethos Flow. Ele agrupa as funções técnicas em macro-benefícios de negócios para a clínica ou psicólogo assinante (Tenant).</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Stats Cards -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                            <p class="text-sm text-stone-500 font-medium uppercase tracking-wider mb-1">Funções Analisadas</p>
+                            <p class="text-4xl font-bold text-stone-800">842</p>
+                            <p class="text-xs text-emerald-600 mt-2 font-medium">&#8593; 12 novas na última versão</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                            <p class="text-sm text-stone-500 font-medium uppercase tracking-wider mb-1">Potencial de Retenção (Tenant)</p>
+                            <p class="text-4xl font-bold text-sky-600">Alto</p>
+                            <p class="text-xs text-stone-500 mt-2">Baseado na densidade de funções de faturamento</p>
+                        </div>
+                        <div class="bg-sky-50 p-6 rounded-xl border border-sky-100 shadow-sm">
+                            <h3 class="font-semibold text-sky-800 mb-2">Insight Principal do LLM</h3>
+                            <p class="text-sm text-sky-700">A maior força do Ethos Flow para o Tenant está na <strong>automação de prontuários</strong> (45% das funções), o que se traduz diretamente em "Horas Clínicas Economizadas".</p>
+                        </div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-center items-center">
+                        <h3 class="font-semibold text-stone-800 self-start mb-4">Distribuição de Benefícios por Categoria</h3>
+                        <div class="chart-container w-full">
+                            <canvas id="benefitsRadarChart"></canvas>
+                        </div>
+                        <p class="text-xs text-stone-400 mt-4 text-center">Gráfico gerado a partir da simulação de mapeamento Função -> Benefício.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: MCP Strategy (Direct Answer to User) -->
+            <section id="mcp-guide" class="tab-content hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-stone-800 mb-2">Como criar esse "Botão Mágico" na IDE</h2>
+                    <p class="text-stone-600">Respondendo à sua pergunta: <strong>Não existe uma skill pronta do tipo "instalar e clicar"</strong> que adivinhe os benefícios de negócio do seu código de forma automática. No entanto, com a arquitetura MCP em IDEs modernas (como Cursor ou Windsurf), você pode montar esse pipeline.</p>
+                </div>
+
+                <div class="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
+                    <div class="p-6 md:p-8 bg-stone-800 text-stone-50">
+                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                            <span>&#9881;</span> Arquitetura de Teste & Análise via MCP
+                        </h3>
+                        
+                        <!-- Flow Diagram using HTML/Tailwind -->
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 bg-stone-900/50 p-6 rounded-lg border border-stone-700">
+                            
+                            <div class="flex-1 text-center">
+                                <div class="bg-stone-700 h-16 w-16 mx-auto rounded-full flex items-center justify-center text-2xl mb-2 border-2 border-stone-500 shadow-inner">
+                                    &#128187;
+                                </div>
+                                <p class="text-sm font-semibold text-stone-300">Sua IDE (Cursor)</p>
+                                <p class="text-xs text-stone-400 mt-1">Aciona o prompt de análise</p>
+                            </div>
+
+                            <div class="text-stone-500 text-2xl font-bold hidden md:block">&#8594;</div>
+                            <div class="text-stone-500 text-2xl font-bold md:hidden">&#8595;</div>
+
+                            <div class="flex-1 text-center">
+                                <div class="bg-sky-900 h-16 w-16 mx-auto rounded-full flex items-center justify-center text-2xl mb-2 border-2 border-sky-600 shadow-inner">
+                                    &#128375;
+                                </div>
+                                <p class="text-sm font-semibold text-sky-300">MCP + Playwright</p>
+                                <p class="text-xs text-sky-400 mt-1">Servidor MCP roda scripts que clicam em todos os botões do Ethos</p>
+                            </div>
+
+                            <div class="text-stone-500 text-2xl font-bold hidden md:block">&#8594;</div>
+                            <div class="text-stone-500 text-2xl font-bold md:hidden">&#8595;</div>
+
+                            <div class="flex-1 text-center">
+                                <div class="bg-emerald-900 h-16 w-16 mx-auto rounded-full flex items-center justify-center text-2xl mb-2 border-2 border-emerald-600 shadow-inner">
+                                    &#129302;
+                                </div>
+                                <p class="text-sm font-semibold text-emerald-300">LLM (Claude/GPT)</p>
+                                <p class="text-xs text-emerald-400 mt-1">Lê a árvore DOM e mapeia a função técnica para um Benefício de Negócio</p>
+                            </div>
+
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 md:p-8 space-y-6 text-stone-700">
+                        <h4 class="text-lg font-semibold text-stone-800">Passo a Passo da Solução:</h4>
+                        <ol class="list-decimal pl-5 space-y-4">
+                            <li>
+                                <strong>Construa um Servidor MCP de Automação:</strong> Você precisará de um script MCP (em Python ou Node.js) que integre o <code>Playwright</code>. O MCP exporá uma "ferramenta" (tool) para a sua IDE chamada <code>scan_frontend_components</code>.
+                            </li>
+                            <li>
+                                <strong>Prompt na IDE:</strong> No Cursor, você daria o comando: <em>"Use a ferramenta scan_frontend_components para varrer o Ethos Flow no localhost:3000. Para cada botão e tela encontrada, gere uma tabela em Markdown traduzindo a ação técnica em um benefício comercial para o dono da clínica."</em>
+                            </li>
+                            <li>
+                                <strong>A Mágica da IA:</strong> A IA não sabe o que o botão faz apenas olhando o HTML bruto, mas ela infere: Se o Playwright achou um botão chamado <code>"Gerar Recibo de Sessão"</code>, o LLM traduz para <code>"Benefício: Conformidade fiscal e economia de 5min por paciente para o psicólogo."</code>
+                            </li>
+                            <li>
+                                <strong>Resultado:</strong> A IDE gera um relatório completo automaticamente para você.
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: Interactive Benefits Explorer -->
+            <section id="benefits-map" class="tab-content hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-stone-800 mb-2">Explorador Interativo de Benefícios</h2>
+                    <p class="text-stone-600">Simule a exploração dos dados resultantes de uma varredura profunda no código. Como a funcionalidade técnica se traduz em valor de venda (benefício para o tenant)?</p>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm mb-6 flex flex-wrap gap-2">
+                    <button class="filter-btn px-4 py-2 bg-sky-100 text-sky-800 rounded-lg text-sm font-medium hover:bg-sky-200 transition-colors" data-filter="all">Todos os Módulos</button>
+                    <button class="filter-btn px-4 py-2 bg-stone-100 text-stone-700 rounded-lg text-sm font-medium hover:bg-stone-200 transition-colors" data-filter="agendamento">Agendamento</button>
+                    <button class="filter-btn px-4 py-2 bg-stone-100 text-stone-700 rounded-lg text-sm font-medium hover:bg-stone-200 transition-colors" data-filter="prontuario">Prontuário</button>
+                    <button class="filter-btn px-4 py-2 bg-stone-100 text-stone-700 rounded-lg text-sm font-medium hover:bg-stone-200 transition-colors" data-filter="financeiro">Financeiro</button>
+                </div>
+
+                <!-- Data Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="benefitsGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // --- DATA STORAGE ---
+        const ethosFeatures = [
+            { id: 1, module: 'agendamento', functionName: 'btn_confirmacao_whatsapp', label: 'Botão WhatsApp Automático', tenantBenefit: 'Redução de Absenteísmo (Faltas)', impactText: 'Diminui em até 30% as faltas, garantindo o faturamento da hora clínica.', icon: '&#128242;' },
+            { id: 2, module: 'prontuario', functionName: 'form_anamnese_template', label: 'Templates Dinâmicos de Anamnese', tenantBenefit: 'Economia de Tempo e Foco', impactText: 'Salva ~10 minutos por primeira sessão. Menos burocracia, mais foco no paciente.', icon: '&#128196;' },
+            { id: 3, module: 'financeiro', functionName: 'calc_faturamento_mensal', label: 'Dashboard de Faturamento', tenantBenefit: 'Previsibilidade Financeira', impactText: 'Permite ao tenant saber exatamente quanto vai receber, reduzindo a ansiedade do profissional autônomo.', icon: '&#128176;' },
+            { id: 4, module: 'agendamento', functionName: 'link_auto_agendamento', label: 'Link Público de Marcação', tenantBenefit: 'Captação Ativa de Pacientes', impactText: 'Converte visitantes do Instagram diretamente em pacientes, sem precisar de secretária.', icon: '&#128197;' },
+            { id: 5, module: 'prontuario', functionName: 'export_prontuario_crp', label: 'Exportação Padrão CRP', tenantBenefit: 'Segurança Jurídica/Regulatória', impactText: 'Tranquilidade total em caso de fiscalização do Conselho, mitigando riscos de multas.', icon: '&#9874;' },
+            { id: 6, module: 'financeiro', functionName: 'alert_inadimplencia', label: 'Régua de Cobrança', tenantBenefit: 'Redução de Inadimplência', impactText: 'Cobra pacientes automaticamente sem gerar constrangimento na relação terapeuta-paciente.', icon: '&#9888;' }
+        ];
+
+        // --- CORE INTERACTION & DOM MANIPULATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            initChart();
+            renderBenefitsGrid('all');
+            initFilters();
+        });
+
+        // 1. Navigation Logic
+        function initNavigation() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active states
+                    tabBtns.forEach(b => b.classList.remove('active', 'text-sky-700', 'font-semibold'));
+                    tabBtns.forEach(b => b.classList.add('text-stone-500'));
+                    tabContents.forEach(c => c.classList.add('hidden'));
+
+                    // Set active state
+                    btn.classList.add('active', 'text-sky-700', 'font-semibold');
+                    btn.classList.remove('text-stone-500');
+                    const targetId = btn.getAttribute('data-target');
+                    document.getElementById(targetId).classList.remove('hidden');
+                });
+            });
+        }
+
+        // 2. Chart.js Implementation
+        function initChart() {
+            const ctx = document.getElementById('benefitsRadarChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Economia de Tempo', 
+                        'Retenção de Pacientes', 
+                        'Aumento de Faturamento', 
+                        'Segurança Jurídica (CRP)', 
+                        'Experiência do Paciente'
+                    ],
+                    datasets: [{
+                        label: 'Volume de Funções Mapeadas',
+                        data: [85, 60, 45, 90, 70],
+                        backgroundColor: 'rgba(2, 132, 199, 0.2)', // Sky blue with opacity
+                        borderColor: 'rgba(2, 132, 199, 1)',
+                        pointBackgroundColor: 'rgba(2, 132, 199, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(2, 132, 199, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: {
+                                font: { family: "'Inter', sans-serif", size: 11 },
+                                color: '#57534E' // stone-600
+                            },
+                            ticks: { display: false, max: 100, min: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#292524',
+                            titleFont: { family: "'Inter', sans-serif" },
+                            bodyFont: { family: "'Inter', sans-serif" },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Impacto Estimado: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Dynamic Grid Implementation
+        function renderBenefitsGrid(filter) {
+            const grid = document.getElementById('benefitsGrid');
+            grid.innerHTML = ''; // Clear current
+
+            const filteredData = filter === 'all' 
+                ? ethosFeatures 
+                : ethosFeatures.filter(f => f.module === filter);
+
+            filteredData.forEach(feature => {
+                // Determine accent color based on module
+                let accentColor = 'bg-stone-100 text-stone-600';
+                if(feature.module === 'agendamento') accentColor = 'bg-blue-100 text-blue-700';
+                if(feature.module === 'prontuario') accentColor = 'bg-emerald-100 text-emerald-700';
+                if(feature.module === 'financeiro') accentColor = 'bg-amber-100 text-amber-700';
+
+                const cardHTML = `
+                    <div class="bg-white border border-stone-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col h-full group">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-xl shadow-sm">
+                                    ${feature.icon}
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-stone-800 text-sm">${feature.label}</h4>
+                                    <code class="text-[10px] text-stone-400 font-mono">${feature.functionName}()</code>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs font-medium uppercase tracking-wider ${accentColor}">
+                                ${feature.module}
+                            </span>
+                        </div>
+                        
+                        <div class="mt-auto pt-4 border-t border-stone-100">
+                            <p class="text-xs font-semibold text-sky-700 uppercase tracking-wider mb-1">Benefício Tenant:</p>
+                            <p class="text-sm font-bold text-stone-800 mb-1">${feature.tenantBenefit}</p>
+                            <p class="text-xs text-stone-600 leading-relaxed">${feature.impactText}</p>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        // 4. Filtering Logic
+        function initFilters() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Reset styling
+                    filterBtns.forEach(b => {
+                        b.classList.remove('bg-sky-100', 'text-sky-800');
+                        b.classList.add('bg-stone-100', 'text-stone-700');
+                    });
+                    
+                    // Set active styling
+                    const target = e.target;
+                    target.classList.remove('bg-stone-100', 'text-stone-700');
+                    target.classList.add('bg-sky-100', 'text-sky-800');
+
+                    // Filter data
+                    const filterValue = target.getAttribute('data-filter');
+                    renderBenefitsGrid(filterValue);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
